@@ -3,13 +3,13 @@ import axios from '@/services/request.service';
 export default {
     state: () => ({
         tree: [],
-
-        treeError: null,
         contentDir: [],
+        selectItems: [],
+
+        treeError: {},
         contentDirError: {},
         createDirError: {},
         renameError: {},
-        selectItems: [],
     }),
     actions: {
         async getTreeDirectory({ commit }) {
@@ -18,13 +18,10 @@ export default {
                     `filemanager/getTreeDirectory`,
                     {}
                 );
-                console.log('getTreeDirectory', data.treeDir);
+                commit('fetchTreeDirectoryFail', {});
                 commit('fetchTreeDirectorySuccess', data.treeDir);
             } catch (err) {
-                commit('fetchTreeDirectoryFail', {
-                    errType: `fetchTreeDirectoryFail fetch failed`,
-                    err,
-                });
+                commit('fetchTreeDirectoryFail', err.response.data);
             }
         },
         async getContentDirectory({ commit }, activeDir) {
@@ -51,27 +48,20 @@ export default {
                     payload
                 );
                 commit('fetchCreateDirectoryFail', {});
-                console.log('CreateDirectory', data);
+                commit('fetchCreateDirectoryFail', {});
             } catch (err) {
-                console.dir(err.response.data);
                 commit('fetchCreateDirectoryFail', err.response.data);
             }
         },
         async delete({ commit }, selectItems) {
-            console.log('selectItems', {
-                items: selectItems,
-            });
             try {
                 const { data } = await axios.post(`filemanager/delete`, {
                     items: selectItems,
                 });
-                console.log('getContentDirectory', data);
+                commit('fetchContentDirectoryFail', {});
                 commit('setSelectItems', []);
             } catch (err) {
-                commit('fetchContentDirectoryFail', {
-                    errType: `fetchContentDirectoryFail fetch failed`,
-                    err,
-                });
+                commit('fetchContentDirectoryFail', err.response.data);
             }
         },
         async rename({ commit }, payload) {
@@ -81,11 +71,9 @@ export default {
                     payload
                 );
                 console.log('getContentDirectory', data);
+                commit('fetchRenameFail', {});
             } catch (err) {
-                commit('fetchRenameFail', {
-                    errType: `fetchRenameFail fetch failed`,
-                    err,
-                });
+                commit('fetchRenameFail', err.response.data);
             }
         },
         async uploadFiles({ commit }, payload) {
@@ -110,12 +98,9 @@ export default {
                         },
                     }
                 );
-                console.log('getContentDirectory', data);
+                commit('uploadFilesFail', {});
             } catch (err) {
-                commit('uploadFilesFail', {
-                    errType: `uploadFilesFail fetch failed`,
-                    err,
-                });
+                commit('uploadFilesFail', err.response.data);
             }
         },
     },
@@ -123,11 +108,15 @@ export default {
         fetchTreeDirectorySuccess(state, tree) {
             state.tree = tree;
         },
-        fetchTreeDirectoryFail(state, err) {
-            state.treeError = err;
-        },
         fetchContentDirectorySuccess(state, content) {
             state.contentDir = content;
+        },
+        setSelectItems(state, selectItems) {
+            state.selectItems = selectItems;
+        },
+
+        fetchTreeDirectoryFail(state, err) {
+            state.treeError = err;
         },
         fetchContentDirectoryFail(state, err) {
             state.contentDirError = err;
@@ -138,18 +127,15 @@ export default {
         fetchRenameFail(state, err) {
             state.renameError = err;
         },
-        setSelectItems(state, selectItems) {
-            console.log('selectItems', selectItems);
-            state.selectItems = selectItems;
-        },
     },
     getters: {
         tree: state => state.tree,
-        treeError: state => state.treeError,
         contentDir: state => state.contentDir,
+        selectItems: state => state.selectItems,
+
+        treeError: state => state.treeError,
         contentDirError: state => state.contentDirError,
         createDirError: state => state.createDirError,
         renameError: state => state.renameError,
-        selectItems: state => state.selectItems,
     },
 };

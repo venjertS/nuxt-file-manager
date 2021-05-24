@@ -26,7 +26,7 @@
                     class="filemanager-action"
                     v-if="contentDirItems && contentDirItems.length > 0"
                 >
-                    <div>
+                    <div class="button-group">
                         <button
                             class="btn btn-primary"
                             @click="onOpenPopupRename"
@@ -42,7 +42,8 @@
                             Удалить ({{ selectItems.length }})
                         </button>
                     </div>
-                    <div>
+                    <div class="spread"></div>
+                    <div class="button-group">
                         <button
                             class="btn btn-primary"
                             @click="onSelectedAllItems"
@@ -57,9 +58,36 @@
                             Снять выделение ({{ selectItems.length }})
                         </button>
                     </div>
+                    <div class="separator"></div>
+                    <div class="button-group">
+                        <button
+                            class="btn btn-primary"
+                            @click="onChangeGridItems('grid_4')"
+                            :disabled="gridType === 'grid_4'"
+                        >
+                            <Icon
+                                :icon_file="'fileManager'"
+                                :icon_name="'nine-black-tiles'"
+                                width="14"
+                                height="15"
+                            />
+                        </button>
+                        <button
+                            class="btn btn-primary"
+                            @click="onChangeGridItems('list')"
+                            :disabled="gridType === 'list'"
+                        >
+                            <Icon
+                                :icon_file="'fileManager'"
+                                :icon_name="'list'"
+                                width="14"
+                                height="15"
+                            />
+                        </button>
+                    </div>
                 </div>
-                {{ treeError }}
                 <content-dir
+                    :gridType="gridType"
                     :activeDir="activeDir"
                     :contentDir="contentDirItems"
                     @onClickDir="onClickDir"
@@ -146,9 +174,16 @@ export default {
         fileManagerInfo: () =>
             import('@/components/FileManager/FileManagerInfo'),
     },
+    props: {
+        prefixLocalStorage: {
+            type: String,
+            default: 'FM_',
+        },
+    },
     data() {
         return {
             activeDir: '',
+            gridType: '',
             searchQuery: '',
             popupCreateDir: false,
             popupRename: false,
@@ -197,7 +232,10 @@ export default {
                 alert(this.contentDirError.message);
                 this.activeDir = oldActiveDir;
             }
-            localStorage.setItem('activeDir', this.activeDir);
+            localStorage.setItem(
+                this.prefixLocalStorage + 'activeDir',
+                this.activeDir
+            );
             this.setSelectItems([]);
         },
         contentDir() {
@@ -205,7 +243,12 @@ export default {
         },
     },
     mounted() {
-        this.activeDir = localStorage.getItem('activeDir') || '';
+        this.activeDir =
+            localStorage.getItem(this.prefixLocalStorage + 'activeDir') || '';
+        this.gridType =
+            localStorage.getItem(this.prefixLocalStorage + 'gridType') ||
+            'grid_4';
+
         this.getTreeDirectory();
         this.getContentDirectory(this.activeDir);
     },
@@ -222,6 +265,14 @@ export default {
             deleteSelectedItems: 'filemanager/delete',
             rename: 'filemanager/rename',
         }),
+        onChangeGridItems(gridType) {
+            console.log(gridType);
+            localStorage.setItem(
+                this.prefixLocalStorage + 'gridType',
+                gridType
+            );
+            this.gridType = gridType;
+        },
         onClickDir(item) {
             const fullPath = this.activeDir
                 ? this.activeDir + '\\' + item.name
@@ -362,13 +413,21 @@ export default {
 .filemanager {
     display: flex;
     height: 100%;
+
+    .spread {
+        flex-grow: 1;
+    }
+    .separator {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+
     .filemanager-search {
         margin-bottom: 10px;
     }
     .filemanager-action {
         margin-bottom: 20px;
         display: flex;
-        justify-content: space-between;
     }
 
     .filemanager-wrp {
@@ -440,13 +499,28 @@ export default {
             opacity: 0.3;
         }
     }
+
     .btn-primary {
         background: $main-background;
     }
     .btn-danger {
         background: $main-background;
     }
-
+    .button-group {
+        display: flex;
+        gap: 1px;
+        & > * {
+            border-radius: 0px;
+        }
+        & > *:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        & > *:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+    }
     .form-control {
         border: none;
         border-radius: 4px;

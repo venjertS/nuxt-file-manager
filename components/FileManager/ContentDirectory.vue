@@ -1,46 +1,23 @@
 <template>
-    <div
-        class="content-directory"
-        :class="{ 'content-directory_sel-box-view': selectItems.length > 0 }"
-    >
-        <template v-if="contentDir">
-            <div
-                v-for="item in contentDir"
-                :key="item.name"
-                class="item"
-                :class="{ item_select: item.selected }"
-                @click="onClickItem(item)"
-            >
-                <div class="item__image">
-                    <Icon
-                        v-if="item.type === 'directory'"
-                        :icon_file="'fileManager'"
-                        :icon_name="'folder-white-shape'"
-                        width="40"
-                        height="40"
-                    />
-                    <Icon
-                        v-else-if="
-                            item.type === 'file' &&
-                            !previewImgStatus &&
-                            svgFileType.includes(item.ext.replace('.', ''))
-                        "
-                        :icon_file="'icoFileType'"
-                        :icon_name="item.ext.replace('.', '')"
-                        width="40"
-                        height="40"
-                    />
-                    <img
-                        v-else-if="
-                            item.type === 'file' &&
-                            allowImgExt.includes(
-                                item.ext.replace('.', '').toLowerCase()
-                            )
-                        "
-                        :src="item.pictures.small"
-                        :alt="item.name"
-                    />
-
+    <div class="content-directory">
+        <div
+            class="content-directory-list"
+            :class="[
+                {
+                    'content-directory-list_sel-box-view':
+                        selectItems.length > 0,
+                },
+                gridType,
+            ]"
+        >
+            <template v-if="contentDir">
+                <div
+                    v-for="item in contentDir"
+                    :key="item.name"
+                    class="item"
+                    :class="{ item_select: item.selected }"
+                    @click="onClickItem(item)"
+                >
                     <input
                         v-if="selectItemsStatus"
                         @click.stop="onSetSelectedItem(item)"
@@ -48,26 +25,56 @@
                         name="selectItems"
                         :checked="item.selected"
                     />
+                    <div class="item__image">
+                        <Icon
+                            v-if="item.type === 'directory'"
+                            :icon_file="'fileManager'"
+                            :icon_name="'folder-white-shape'"
+                            width="40"
+                            height="40"
+                        />
+                        <Icon
+                            v-else-if="
+                                item.type === 'file' &&
+                                !previewImgStatus &&
+                                svgFileType.includes(item.ext.replace('.', ''))
+                            "
+                            :icon_file="'icoFileType'"
+                            :icon_name="item.ext.replace('.', '')"
+                            width="40"
+                            height="40"
+                        />
+                        <img
+                            v-else-if="
+                                item.type === 'file' &&
+                                allowImgExt.includes(
+                                    item.ext.replace('.', '').toLowerCase()
+                                )
+                            "
+                            :src="item.pictures.small"
+                            :alt="item.name"
+                        />
+                    </div>
+                    <div class="item__name">{{ item.name }}</div>
+                    <div class="item__filesize" v-if="item.type === 'file'">
+                        {{ getReadableFileSizeString(item.size) }}
+                    </div>
+                    <div
+                        class="item__dimensions"
+                        v-if="
+                            item.type === 'file' &&
+                            allowImgExt.includes(
+                                item.ext.replace('.', '').toLowerCase()
+                            )
+                        "
+                    >
+                        {{ item.dimensions.width }}px x
+                        {{ item.dimensions.height }}px
+                    </div>
                 </div>
-                <div class="item__name">{{ item.name }}</div>
-                <div class="item__filesize" v-if="item.type === 'file'">
-                    {{ getReadableFileSizeString(item.size) }}
-                </div>
-                <div
-                    class="item__dimensions"
-                    v-if="
-                        item.type === 'file' &&
-                        allowImgExt.includes(
-                            item.ext.replace('.', '').toLowerCase()
-                        )
-                    "
-                >
-                    {{ item.dimensions.width }}px x
-                    {{ item.dimensions.height }}px
-                </div>
-            </div>
-        </template>
-        <template v-else> Loading... </template>
+            </template>
+            <template v-else> Loading... </template>
+        </div>
     </div>
 </template>
 <script>
@@ -84,6 +91,10 @@ export default {
             type: String,
             default: '',
         },
+        gridType: {
+            type: String,
+            default: 'grid_4',
+        },
         contentDir: {
             type: Array || null,
             default: () => [],
@@ -98,17 +109,22 @@ export default {
         },
     },
     data() {
-        return { allowImgExt, svgFileType };
+        return {
+            allowImgExt,
+            svgFileType,
+        };
     },
     computed: {
         ...mapGetters({
             selectItems: 'filemanager/selectItems',
         }),
     },
+
     methods: {
         ...mapMutations({
             setSelectItems: 'filemanager/setSelectItems',
         }),
+
         onSetSelectedItem(item) {
             const fullPath = this.activeDir
                 ? this.activeDir + '\\' + item.name
@@ -159,68 +175,134 @@ export default {
 <style lang="scss">
 @import '@/assets/css/color.scss';
 .content-directory {
-    display: grid;
     margin-bottom: auto;
-    grid-template-columns:
-        minmax(170px, 1fr) minmax(170px, 1fr)
-        minmax(170px, 1fr);
-    gap: 20px;
-    &.content-directory_sel-box-view {
-        .item {
-            cursor: pointer;
-            &__image {
-                input[type='checkbox'] {
-                    display: block;
-                }
-            }
-        }
+    .content-directory-grid-type {
+        margin-bottom: 10px;
     }
-    .item {
-        background: #565663;
-        padding: 10px;
-        cursor: pointer;
-        border-radius: 10px;
-        &_select {
-            background: $select-background;
-        }
-        &:hover {
-            background: $select-background;
-            .item__image {
-                input[type='checkbox'] {
-                    display: block;
+    .content-directory-list {
+        display: grid;
+
+        &.list {
+            gap: 1px;
+            grid-template-columns: minmax(170px, 1fr);
+
+            .item {
+                display: flex;
+                align-items: center;
+                position: relative;
+                background: #565663;
+                padding: 10px;
+                cursor: pointer;
+                &:first-child {
+                    border-top-left-radius: 10px;
+                    border-top-right-radius: 10px;
+                }
+                &:last-child {
+                    border-bottom-left-radius: 10px;
+                    border-bottom-right-radius: 10px;
+                }
+                &_select {
+                    background: $select-background;
+                }
+                &:hover {
+                    background: $select-background;
+                }
+                & > input[type='checkbox'] {
+                    margin-right: 10px;
+                }
+                &__image {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 10px;
+                    height: 30px;
+                    width: 50px;
+                    line-height: 0;
+
+                    img {
+                        max-width: 100%;
+                        max-height: 100%;
+                    }
+                    svg {
+                        fill: #ccc;
+                        width: 25px;
+                    }
+                }
+                &__name {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    margin-right: 20px;
+                    flex-grow: 1;
+                }
+                &__filesize {
+                    color: #bbb;
+                    margin-right: 20px;
                 }
             }
         }
-        &__image {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-            height: 170px;
-            line-height: 0;
-            position: relative;
+        &.grid_4 {
+            gap: 20px;
+            grid-template-columns:
+                minmax(170px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr)
+                minmax(170px, 1fr);
 
-            img {
-                max-width: 100%;
-                max-height: 100%;
-            }
-            svg {
-                fill: #ccc;
-            }
-            input[type='checkbox'] {
-                display: none;
-                position: absolute;
-                top: 0px;
-                left: 0px;
+            .item {
+                background: #565663;
+                position: relative;
+                padding: 10px;
+                cursor: pointer;
+                border-radius: 10px;
+                &_select {
+                    background: $select-background;
+                }
+                &:hover {
+                    background: $select-background;
+
+                    & > input[type='checkbox'] {
+                        display: block;
+                    }
+                }
+                & > input[type='checkbox'] {
+                    display: none;
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                }
+                &__image {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 10px;
+                    height: 170px;
+                    line-height: 0;
+
+                    img {
+                        max-width: 100%;
+                        max-height: 100%;
+                    }
+                    svg {
+                        fill: #ccc;
+                    }
+                }
+                &__name {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                &__filesize {
+                    color: #bbb;
+                }
             }
         }
-        &__name {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        &__filesize {
-            color: #bbb;
+
+        &.content-directory-list_sel-box-view {
+            .item {
+                cursor: pointer;
+                & > input[type='checkbox'] {
+                    display: block;
+                }
+            }
         }
     }
 }
